@@ -1,4 +1,3 @@
-// ------------------------------------------------------------------------------------------
 var isFlutterInAppWebViewReady = false;
 
 window.addEventListener("flutterInAppWebViewPlatformReady", function (event) {
@@ -8,7 +7,7 @@ window.addEventListener("flutterInAppWebViewPlatformReady", function (event) {
 setTimeout(() => {
     console.log('isFlutterInAppWebViewReady : ' + isFlutterInAppWebViewReady);
 }, 1000);
-// ------------------------------------------------------------------------------------------
+
 class MyRecevedCommands {
     static echo = 'echo';
     static setCurrentPosition = 'setCurrentPosition';
