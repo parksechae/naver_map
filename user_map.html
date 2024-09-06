@@ -47,7 +47,7 @@
       class MyRecevedCommands {
         static echo = "echo";
         static setCurrentPosition = "setCurrentPosition";
-        static setMarker = "setCarMarker";
+        static setCarMarker = "setCarMarker";
       }
 
       class MySendCommands {
@@ -57,37 +57,21 @@
 
       var port;
 
-      function AppLitener(event) {
-        console.log("--------------");
-        console.log(event);
-        console.log("--------------");
-        if (event.data == "capturePort") {
-          if (event.ports[0] != null) {
-            port = event.ports[0];
+      function receiveMessageFromApp(message) {
+        console.log("received from app : " + message.data);
 
-            if (port == null) {
-              alert("message channel port is null");
-            } else {
-              port.onmessage = receiveMessageFromApp;
-            }
-            5;
-          }
-        }
-      }
-
-      function receiveMessageFromApp(event) {
-        console.log("received from app : " + event.data);
-
-        const receivedData = JSON.parse(event.data);
+        const receivedData = JSON.parse(message.data);
         const command = receivedData.command;
         const argument = receivedData.argument;
 
         if (command == MyRecevedCommands.echo) {
           console.log("echo : " + argument);
         } else if (command == MyRecevedCommands.setCurrentPosition) {
-          movePosition(argument.latitude, argument.longitude);
+          setCurrentPosition(argument.latitude, argument.longitude);
         } else if (command == MyRecevedCommands.setCarMarker) {
           setCarMarker(argument.latitude, argument.longitude);
+        } else {
+          alert("unknown command : " + command);
         }
       }
 
@@ -111,7 +95,25 @@
         }
       }
 
-      window.addEventListener("message", AppLitener, false);
+      window.addEventListener("message", (event) => {
+        console.log("--------------");
+        console.log(event);
+        console.log("--------------");
+
+        if (event.data == "capturePort") {
+          if (event.ports[0] != null) {
+            port = event.ports[0];
+
+            if (port == null) {
+              alert("message channel port is null");
+            } else {
+              port.onmessage = receiveMessageFromApp;
+            }
+          }
+        } else {
+          alert("unknown event : " + event);
+        }
+      });
     </script>
 
     <!-- ############################################################################################################# -->
@@ -121,10 +123,14 @@
     <script type="text/javascript">
       console.log(">>> 네이버 지도 생성 시작");
 
+      // 서울 시청
+      var latitude = 37.5666103;
+      var longitude = 126.9783882;
+
       const mapOptions = {
         center: new naver.maps.LatLng(37.3595704, 127.105399),
         zoom: 12,
-        zoomControl: true, // 줌 컨트롤러 활성화 여부
+        // zoomControl: true, // 줌 컨트롤러 활성화 여부
         mapTypeControl: true, // 지도 유형 컨트롤러 활성화 여부
         scaleControl: true, // 지도 스케일 표시 여부
         // GeolocationControl: true,  // 사용자의 위치를 나타내는 버튼 활성화 여부
@@ -137,46 +143,7 @@
         console.log(">>> 네이버 지도 로딩 완료");
       }
 
-      var latitude = null;
-      var longitude = null;
-
-      // var currentInfowindow = new naver.maps.InfoWindow();
-
-      // function onSuccessGeolocation(position) {
-      //     var location = new naver.maps.LatLng(position.coords.latitude,
-      //         position.coords.longitude);
-
-      //     latitude = position.coords.latitude;
-      //     longitude = position.coords.longitude;
-
-      //     map.setCenter(location); // 얻은 좌표를 지도의 중심으로 설정합니다.
-      //     map.setZoom(15); // 지도의 줌 레벨을 변경합니다.
-
-      //     currentInfowindow.setContent('<div style="padding:20px;">' + '현재 위치 (geolocation.getCurrentPosition())' + '</div>');
-
-      //     currentInfowindow.open(map, location);
-      //     console.log('Coordinates: ' + location.toString());
-      // }
-
-      // function onErrorGeolocation() {
-      //     var center = map.getCenter();
-
-      //     currentInfowindow.setContent('<div style="padding:20px;">' +
-      //         '<h5 style="margin-bottom:5px;color:#f00;">Geolocation failed!</h5>'+ "latitude: "+ center.lat() +"<br />longitude: "+ center.lng() +'</div>');
-
-      //     currentInfowindow.open(map, center);
-      // }
-
-      $(window).on("load", function () {
-        // setTimeout(() => {
-        //     if (!isFlutterInAppWebViewReady) {
-        //         setCurrentPosition();
-        //     }
-        // }, 3000);
-      });
-
       // --------------------------------------------------------------------------------------------------------
-      const buttonPosition = naver.maps.Position.TOP_RIGHT;
 
       naver.maps.Event.once(map, "init", function () {
         // //customControl 객체 이용하기
@@ -198,22 +165,45 @@
         // });
       });
 
-      var latitude = 37.395704;
-      var longitude = 127.105399;
+      const carIcon = {
+        url: "https://cdn-icons-png.flaticon.com/128/776/776588.png",
+        // url: 'https://cdn-icons-png.flaticon.com/128/1839/1839268.png',
+        scaledSize: new naver.maps.Size(30, 30), // 표시할 크기 설정
+        origin: new naver.maps.Point(0, 0),
+        anchor: new naver.maps.Point(15, 15), // 중심점 설정
+      };
 
-      var userMarker = new naver.maps.Marker({
+      const orderdCarIcon = {
+        url: "https://cdn-icons-png.flaticon.com/128/1839/1839233.png",
+        scaledSize: new naver.maps.Size(36, 36), // 표시할 크기 설정
+        origin: new naver.maps.Point(0, 0),
+        anchor: new naver.maps.Point(18, 18), // 중심점 설정
+      };
+
+      const selectedIcon = {
+        url: "https://cdn-icons-png.flaticon.com/128/7839/7839594.png",
+        scaledSize: new naver.maps.Size(40, 40), // 표시할 크기 설정
+        origin: new naver.maps.Point(0, 0),
+        anchor: new naver.maps.Point(20, 20), // 중심점 설정
+      };
+
+      const myUserIcon = {
+        // url: 'https://cdn-icons-png.flaticon.com/128/12536/12536136.png',  // 사람
+        // url: 'https://cdn-icons-png.flaticon.com/128/3710/3710242.png',  // 사람
+        url: "https://cdn-icons-png.flaticon.com/128/2442/2442108.png", // 사람
+        scaledSize: new naver.maps.Size(36, 36), // 표시할 크기 설정
+        origin: new naver.maps.Point(0, 0),
+        anchor: new naver.maps.Point(18, 18), // 아이콘 중심점 설정
+      };
+
+      // --------------------------------------------------------------------------------------------------------
+
+      var myUserMarker = new naver.maps.Marker({
         map: map,
         position: new naver.maps.LatLng(latitude, longitude),
         title: "User",
         data: {},
-        icon: {
-          // url: 'https://cdn-icons-png.flaticon.com/128/12536/12536136.png',  // 사람
-          // url: 'https://cdn-icons-png.flaticon.com/128/3710/3710242.png',  // 사람
-          url: "https://cdn-icons-png.flaticon.com/128/2442/2442108.png", // 사람
-          scaledSize: new naver.maps.Size(36, 36), // 표시할 크기 설정
-          origin: new naver.maps.Point(0, 0),
-          anchor: new naver.maps.Point(18, 18), // 아이콘 중심점 설정
-        },
+        icon: myUserIcon,
       });
       var markers = [];
       var infoWindows = [];
@@ -226,6 +216,12 @@
         resetIcon();
       });
 
+      function removeAllMarkers() {
+        for (var i = 0; i < markers.length; i++) {
+          markers[i].setMap(null);
+        }
+      }
+
       function removeAllInfoWindows() {
         for (var i = 0; i < infoWindows.length; i++) {
           console.log(infoWindows[i]);
@@ -235,22 +231,16 @@
         }
       }
 
-      function removeAllMarkers() {
-        for (var i = 0; i < markers.length; i++) {
-          markers[i].setMap(null);
-        }
-      }
-
-      function removePolylines() {
+      function removeAllPolylines() {
         for (var i = 0; i < polylines.length; i++) {
           polylines[i].setMap(null);
         }
       }
 
-      function removeAllObjectsInMap() {
+      function removeAllObjects() {
         removeAllInfoWindows();
         removeAllMarkers();
-        removePolylines();
+        removeAllPolylines();
       }
 
       function resetIcon() {
@@ -280,19 +270,15 @@
       }
 
       function setCarMarker(latitude, longitude) {
-        if (typeof latitude === "string") {
-          latitude = parseFloat(latitude);
-        }
-        if (typeof longitude === "string") {
-          longitude = parseFloat(longitude);
-        }
+        removeAllObjects();
 
         markers = [];
         infoWindows = [];
         icons = [];
+        polylines = [];
 
-        // var latitude = 37.3595704;
-        // var longitude = 127.105399;
+        latitude = latitude - 0.002;
+        longitude = longitude - 0.001;
 
         for (var i = 0; i < 3; i++) {
           latitude = latitude + (i * 0.001 + Math.random() / 500);
@@ -305,6 +291,7 @@
           var description = `화물차 : ${i + 1}`;
 
           var path = [];
+
           if (i == 0) {
             path = [
               new naver.maps.LatLng(latitude - 0.0005, longitude + 0.0005),
@@ -375,28 +362,6 @@
 
           polylines.push(polyline);
 
-          var defaultCarIcon = {
-            url: "https://cdn-icons-png.flaticon.com/128/776/776588.png",
-            // url: 'https://cdn-icons-png.flaticon.com/128/1839/1839268.png',
-            scaledSize: new naver.maps.Size(30, 30), // 표시할 크기 설정
-            origin: new naver.maps.Point(0, 0),
-            anchor: new naver.maps.Point(15, 15), // 중심점 설정
-          };
-
-          var selectedCarIcon = {
-            url: "https://cdn-icons-png.flaticon.com/128/7839/7839594.png",
-            scaledSize: new naver.maps.Size(40, 40), // 표시할 크기 설정
-            origin: new naver.maps.Point(0, 0),
-            anchor: new naver.maps.Point(20, 20), // 중심점 설정
-          };
-
-          var orderdCarIcon = {
-            url: "https://cdn-icons-png.flaticon.com/128/1839/1839233.png",
-            scaledSize: new naver.maps.Size(36, 36), // 표시할 크기 설정
-            origin: new naver.maps.Point(0, 0),
-            anchor: new naver.maps.Point(18, 18), // 중심점 설정
-          };
-
           var marker = new naver.maps.Marker({
             map: map,
             position: new naver.maps.LatLng(latitude, longitude),
@@ -406,7 +371,7 @@
               name: "marker:" + (i + 1),
               desc: description,
             },
-            icon: defaultCarIcon,
+            icon: carIcon,
           });
 
           if (i == 0) {
@@ -416,8 +381,8 @@
               content: `<div style="width:150px;text-align:center;padding:10px;">[내가주문한 차량 표시:${description}]</div>`,
             });
           } else {
-            marker.setIcon(defaultCarIcon);
-            icons.push(defaultCarIcon);
+            marker.setIcon(carIcon);
+            icons.push(carIcon);
             var infoWin = new naver.maps.InfoWindow({
               content: ``,
             });
@@ -470,7 +435,7 @@
             var marker = markers[seq],
               infoWindow = infoWindows[seq];
 
-            marker.setIcon(selectedCarIcon);
+            marker.setIcon(selectedIcon);
 
             if (infoWindow.getMap()) {
               infoWindow.close();
@@ -487,48 +452,17 @@
         }
       }
 
-      function setCurrentPosition() {
-        // 우리집
-        // 37.442228
-        // 126.712872
+      function setCurrentPosition(latitude, longitude) {
+        console.log(
+          ">>>>> setCurrentPosition : " + latitude + ", " + longitude
+        );
 
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            function (position) {
-              console.log(
-                ">>>>> curreunt position : " +
-                  position.coords.latitude +
-                  ", " +
-                  position.coords.longitude
-              );
-              movePosition(position.coords.latitude, position.coords.longitude);
-            },
-            function (error) {
-              alert("Error occurred while retrieving location:", error);
-            }
-          );
-        } else {
-          alert("Geolocation is not supported by this browser.");
-          console.error("Geolocation is not supported by this browser.");
-          var center = map.getCenter();
-          currentInfowindow.setContent(
-            '<div style="padding:20px;"><h5 style="margin-bottom:5px;color:#f00;">Geolocation not supported</h5></div>'
-          );
-          currentInfowindow.open(map, center);
-        }
-      }
+        const currentLocation = new naver.maps.LatLng(latitude, longitude);
 
-      function movePosition(lat, lng) {
-        console.log(">>>>> movePosition : " + lat + ", " + lng);
+        myUserMarker.setPosition(currentLocation);
+        myUserMarker.setMap(map);
 
-        var currentLocation = new naver.maps.LatLng(lat, lng);
-
-        removeAllObjectsInMap();
-
-        userMarker.setPosition(new naver.maps.LatLng(lat, lng));
-        userMarker.setMap(map);
-
-        setCarMarker(lat, lng);
+        // setCarMarker(latitude, longitude);
 
         // 지도 중심을 현재 위치로 이동
         map.setCenter(currentLocation);
