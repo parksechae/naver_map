@@ -47,7 +47,7 @@
       class MyRecevedCommands {
         static echo = "echo";
         static setCurrentPosition = "setCurrentPosition";
-        static setCarMarker = "setCarMarker";
+        static setCarMarkers = "setCarMarkers";
       }
 
       class MySendCommands {
@@ -67,11 +67,11 @@
         if (command == MyRecevedCommands.echo) {
           console.log("echo : " + argument);
         } else if (command == MyRecevedCommands.setCurrentPosition) {
-          setCurrentPosition(argument.latitude, argument.longitude);
-        } else if (command == MyRecevedCommands.setCarMarker) {
-          setCarMarker(argument.latitude, argument.longitude);
+          setCurrentPosition(argument);
+        } else if (command == MyRecevedCommands.setCarMarkers) {
+          setCarMarkers(argument);
         } else {
-          alert("unknown command : " + command);
+          console.error("unknown command : " + command);
         }
       }
 
@@ -86,6 +86,14 @@
           alert("Port is not ready yet");
           return;
         } else {
+          console.log("------------------");
+          console.log(
+            JSON.stringify({
+              command: command,
+              argument: argument,
+            })
+          );
+          console.log("------------------");
           window.port.postMessage(
             JSON.stringify({
               command: command,
@@ -130,7 +138,7 @@
       const mapOptions = {
         center: new naver.maps.LatLng(37.3595704, 127.105399),
         zoom: 12,
-        // zoomControl: true, // 줌 컨트롤러 활성화 여부
+        zoomControl: true, // 줌 컨트롤러 활성화 여부
         mapTypeControl: true, // 지도 유형 컨트롤러 활성화 여부
         scaleControl: true, // 지도 스케일 표시 여부
         // GeolocationControl: true,  // 사용자의 위치를 나타내는 버튼 활성화 여부
@@ -269,7 +277,190 @@
         }
       }
 
-      function setCarMarker(latitude, longitude) {
+      // function setCarMarker(latitude, longitude) {
+      //   removeAllObjects();
+
+      //   markers = [];
+      //   infoWindows = [];
+      //   icons = [];
+      //   polylines = [];
+
+      //   latitude = latitude - 0.002;
+      //   longitude = longitude - 0.001;
+
+      //   for (var i = 0; i < 3; i++) {
+      //     latitude = latitude + (i * 0.001 + Math.random() / 500);
+      //     longitude = longitude + (i * 0.001 + Math.random() / 500);
+
+      //     console.log(">>> setMarker start");
+      //     console.log(">>>>>>> latitude : " + latitude);
+      //     console.log(">>>>>>> longitude : " + longitude);
+
+      //     var description = `화물차 : ${i + 1}`;
+
+      //     var path = [];
+
+      //     if (i == 0) {
+      //       path = [
+      //         new naver.maps.LatLng(latitude - 0.0005, longitude + 0.0005),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude + 0.001),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude + 0.002),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude + 0.002),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude + 0.002),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude + 0.003),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude + 0.003),
+      //         new naver.maps.LatLng(latitude - 0.002, longitude + 0.003),
+      //         new naver.maps.LatLng(latitude - 0.002, longitude + 0.002),
+      //         new naver.maps.LatLng(latitude - 0.002, longitude + 0.001),
+      //         new naver.maps.LatLng(latitude - 0.003, longitude - 0.001),
+      //         new naver.maps.LatLng(latitude - 0.003, longitude - 0.002),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude - 0.003),
+      //         new naver.maps.LatLng(latitude - 0.0005, longitude - 0.0005),
+      //       ];
+      //     } else if (i === 1) {
+      //       path = [
+      //         new naver.maps.LatLng(latitude + 0.0005, longitude + 0.0005),
+      //         new naver.maps.LatLng(latitude + 0.001, longitude - 0.001),
+      //         new naver.maps.LatLng(latitude + 0.001, longitude - 0.001),
+      //         new naver.maps.LatLng(latitude + 0.001, longitude - 0.001),
+      //         new naver.maps.LatLng(latitude + 0.001, longitude + 0.003),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude + 0.003),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude + 0.002),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude + 0.002),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude - 0.002),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude - 0.002),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude - 0.002),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude - 0.002),
+      //         new naver.maps.LatLng(latitude - 0.001, longitude - 0.002),
+      //         new naver.maps.LatLng(latitude - 0.0005, longitude - 0.0005),
+      //       ];
+      //     } else if (i === 2) {
+      //       path = [
+      //         new naver.maps.LatLng(latitude + 0.0005, longitude + 0.0005),
+      //         new naver.maps.LatLng(latitude + 0.0, longitude + 0.001),
+      //         new naver.maps.LatLng(latitude + 0.0, longitude + 0.001),
+      //         new naver.maps.LatLng(latitude + 0.0, longitude + 0.001),
+      //         new naver.maps.LatLng(latitude + 0.0, longitude + 0.002),
+      //         new naver.maps.LatLng(latitude + 0.001, longitude + 0.002),
+      //         new naver.maps.LatLng(latitude + 0.001, longitude + 0.003),
+      //         new naver.maps.LatLng(latitude + 0.001, longitude + 0.003),
+      //         new naver.maps.LatLng(latitude + 0.002, longitude + 0.002),
+      //         new naver.maps.LatLng(latitude + 0.002, longitude + 0.002),
+      //         new naver.maps.LatLng(latitude + 0.003, longitude + 0.001),
+      //         new naver.maps.LatLng(latitude + 0.003, longitude - 0.001),
+      //         new naver.maps.LatLng(latitude + 0.002, longitude - 0.001),
+      //         new naver.maps.LatLng(latitude + 0.0005, longitude - 0.0005),
+      //       ];
+      //     }
+
+      //     // Polyline 생성
+      //     var polyline = new naver.maps.Polyline({
+      //       path: path,
+      //       strokeColor: generateRandomColor(i),
+      //       strokeWeight: 1,
+      //       strokeOpacity: 1, // 불투명도
+      //       strokeStyle: "shortdash", // 점선 스타일 설정
+      //       startIcon: naver.maps.PointingIcon.CIRCLE,
+      //       startIconSize: 10,
+      //       endIcon: naver.maps.PointingIcon.BLOCK_ARROW,
+      //       endIconSize: 10,
+
+      //       map: map,
+      //     });
+
+      //     polylines.push(polyline);
+
+      //     var marker = new naver.maps.Marker({
+      //       map: map,
+      //       position: new naver.maps.LatLng(latitude, longitude),
+      //       title: "marker:" + (i + 1),
+      //       data: {
+      //         id: i + 1,
+      //         name: "marker:" + (i + 1),
+      //         desc: description,
+      //       },
+      //       icon: carIcon,
+      //     });
+
+      //     if (i == 0) {
+      //       marker.setIcon(orderdCarIcon);
+      //       icons.push(orderdCarIcon);
+      //       var infoWin = new naver.maps.InfoWindow({
+      //         content: `<div style="width:150px;text-align:center;padding:10px;">[내가주문한 차량 표시:${description}]</div>`,
+      //       });
+      //     } else {
+      //       marker.setIcon(carIcon);
+      //       icons.push(carIcon);
+      //       var infoWin = new naver.maps.InfoWindow({
+      //         content: ``,
+      //       });
+      //     }
+
+      //     markers.push(marker);
+      //     infoWindows.push(infoWin);
+      //     // icons.push(icon);
+
+      //     naver.maps.Event.addListener(marker, "idle", (e) => {
+      //       updateMarkers(map, markers);
+      //     });
+      //     console.log("setMarker finish");
+      //   }
+
+      //   function updateMarkers(map, markers) {
+      //     var mapBounds = map.getBounds();
+      //     var marker, position;
+
+      //     for (var i = 0; i < markers.length; i++) {
+      //       marker = markers[i];
+      //       position = marker.getPosition();
+
+      //       if (mapBounds.hasLatLng(position)) {
+      //         showMarker(map, marker);
+      //       } else {
+      //         hideMarker(map, marker);
+      //       }
+      //     }
+      //   }
+
+      //   function showMarker(map, marker) {
+      //     if (marker.setMap()) return;
+      //     marker.setMap(map);
+      //   }
+
+      //   function hideMarker(map, marker) {
+      //     if (!marker.setMap()) return;
+      //     marker.setMap(null);
+      //   }
+
+      //   // 해당 마커의 인덱스를 seq라는 클로저 변수로 저장하는 이벤트 핸들러를 반환합니다.
+      //   function getClickHandler(seq) {
+      //     return function (e) {
+      //       // console.log(e);
+      //       sendMessageToApp(MySendCommands.openCarInfo, e.overlay.data.id);
+
+      //       resetIcon();
+
+      //       var marker = markers[seq],
+      //         infoWindow = infoWindows[seq];
+
+      //       marker.setIcon(selectedIcon);
+
+      //       if (infoWindow.getMap()) {
+      //         infoWindow.close();
+      //       } else {
+      //         if (infoWindow.getContent() != "") {
+      //           infoWindow.open(map, marker);
+      //         }
+      //       }
+      //     };
+      //   }
+
+      //   for (var i = 0; i < markers.length; i++) {
+      //     naver.maps.Event.addListener(markers[i], "click", getClickHandler(i));
+      //   }
+      // }
+
+      function setCarMarkers(vehicles) {
         removeAllObjects();
 
         markers = [];
@@ -277,18 +468,11 @@
         icons = [];
         polylines = [];
 
-        latitude = latitude - 0.002;
-        longitude = longitude - 0.001;
+        for (const [i, vehicle] of vehicles.entries()) {
+          latitude = vehicle.current_location_lat;
+          longitude = vehicle.current_location_long;
 
-        for (var i = 0; i < 3; i++) {
-          latitude = latitude + (i * 0.001 + Math.random() / 500);
-          longitude = longitude + (i * 0.001 + Math.random() / 500);
-
-          console.log(">>> setMarker start");
-          console.log(">>>>>>> latitude : " + latitude);
-          console.log(">>>>>>> longitude : " + longitude);
-
-          var description = `화물차 : ${i + 1}`;
+          var description = `${vehicle.plate_number}(${vehicle.vehicle_type})`;
 
           var path = [];
 
@@ -366,11 +550,12 @@
             map: map,
             position: new naver.maps.LatLng(latitude, longitude),
             title: "marker:" + (i + 1),
-            data: {
-              id: i + 1,
-              name: "marker:" + (i + 1),
-              desc: description,
-            },
+            // data: {
+            //   id: i + 1,
+            //   name: "marker:" + (i + 1),
+            //   desc: description,
+            // },
+            data: vehicle,
             icon: carIcon,
           });
 
@@ -378,7 +563,7 @@
             marker.setIcon(orderdCarIcon);
             icons.push(orderdCarIcon);
             var infoWin = new naver.maps.InfoWindow({
-              content: `<div style="width:150px;text-align:center;padding:10px;">[내가주문한 차량 표시:${description}]</div>`,
+              content: `<div style="width:150px;text-align:center;padding:10px;">내주문차량:${description}</div>`,
             });
           } else {
             marker.setIcon(carIcon);
@@ -428,7 +613,7 @@
         function getClickHandler(seq) {
           return function (e) {
             // console.log(e);
-            sendMessageToApp(MySendCommands.openCarInfo, e.overlay.data.id);
+            sendMessageToApp(MySendCommands.openCarInfo, e.overlay.data);
 
             resetIcon();
 
@@ -452,7 +637,10 @@
         }
       }
 
-      function setCurrentPosition(latitude, longitude) {
+      function setCurrentPosition(position) {
+        const latitude = position.latitude;
+        const longitude = position.longitude;
+
         console.log(
           ">>>>> setCurrentPosition : " + latitude + ", " + longitude
         );
@@ -461,8 +649,6 @@
 
         myUserMarker.setPosition(currentLocation);
         myUserMarker.setMap(map);
-
-        // setCarMarker(latitude, longitude);
 
         // 지도 중심을 현재 위치로 이동
         map.setCenter(currentLocation);

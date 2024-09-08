@@ -67,7 +67,7 @@
         if (command == MyRecevedCommands.echo) {
           console.log("echo : " + argument);
         } else if (command == MyRecevedCommands.setCurrentPosition) {
-          setCurrentPosition(argument.latitude, argument.longitude);
+          setCurrentPosition(argument);
         } else if (command == MyRecevedCommands.setUserMarker) {
           setUserMarkers(argument.latitude, argument.longitude);
         } else {
@@ -111,7 +111,7 @@
             }
           }
         } else {
-          alert("unknown event : " + event);
+          console.error("unknown event : " + event);
         }
       });
     </script>
@@ -284,7 +284,7 @@
 
           var icon = userIcon;
 
-          if (i == 0) {
+          if (i == 2) {
             icon = orderedUserIcon;
           }
 
@@ -379,7 +379,10 @@
         });
       }
 
-      function setCurrentPosition(latitude, longitude) {
+      function setCurrentPosition(position) {
+        const latitude = position.latitude;
+        const longitude = position.longitude;
+
         console.log(
           ">>>>> setCurrentPosition : " + latitude + ", " + longitude
         );
