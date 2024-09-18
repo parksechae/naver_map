@@ -9,11 +9,25 @@
     />
     <title>User Map</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <style></style>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+    />
+    <style>
+      .btn_com {
+        background-color: white;
+        border: 1px solid #e0e0e0;
+        color: rgb(0, 0, 255);
+        height: 30px;
+        font-size: 14px;
+        cursor: pointer;
+        margin-bottom: 10px;
+      }
+    </style>
   </head>
 
   <body>
-    <div id="map" style="width: 100%; height: 800px"></div>
+    <div id="map" style="width: 100%; height: 98vh"></div>
 
     <!-- <script type="text/javascript" src="_util.js"></script> -->
     <!-- <script type="text/javascript" src="_interaction.js"></script> -->
@@ -53,6 +67,8 @@
       class MySendCommands {
         static echo = "echo";
         static openCarInfo = "openCarInfo";
+        static requestCurrentPosition = "requestCurrentPosition";
+        static requestRefreshHome = "requestRefreshHome";
       }
 
       var port;
@@ -139,10 +155,12 @@
       const mapOptions = {
         center: new naver.maps.LatLng(37.3595704, 127.105399),
         zoom: 12,
-        zoomControl: true, // 줌 컨트롤러 활성화 여부
         mapTypeControl: true, // 지도 유형 컨트롤러 활성화 여부
-        scaleControl: true, // 지도 스케일 표시 여부
-        // GeolocationControl: true,  // 사용자의 위치를 나타내는 버튼 활성화 여부
+        // zoomControl: true, // 줌 컨트롤러 활성화 여부
+        scaleControl: true,
+        scaleControlOptions: {
+          position: naver.maps.Position.RIGHT_CENTER,
+        },
         mapTypeId: naver.maps.MapTypeId.NORMAL,
       };
 
@@ -153,25 +171,39 @@
       }
 
       // --------------------------------------------------------------------------------------------------------
-
       naver.maps.Event.once(map, "init", function () {
-        // //customControl 객체 이용하기
-        // var customControl = new naver.maps.CustomControl('<button type="button">현재 위치</button>', {
-        //     position: buttonPosition
-        // });
-        // customControl.setMap(map);
-        // var domEventListener = naver.maps.Event.addDOMListener(customControl.getElement(), 'click', function () {
-        //     console.log('click current location button');
-        //     setCurrentPosition();
-        // });
-        // //Map 객체의 controls 활용하기
-        // var $defaultBtn = $('<button type="button">기본</button>'),
-        //     defaultBtnEl = $defaultBtn[0];
-        // map.controls[buttonPosition].push(defaultBtnEl);
-        // var domEventListener = naver.maps.Event.addDOMListener(defaultBtnEl, 'click', function () {
-        //     map.setCenter(new naver.maps.LatLng(37.3595953, 127.1553971));
-        //     map.setZoom(12);
-        // });
+        var locationBtnHtml =
+          '<button id="locationBtn" title="현재위치" class="btn_com"><i class="fas fa-location-crosshairs"></i></button>';
+        var locationControl = new naver.maps.CustomControl(locationBtnHtml, {
+          position: naver.maps.Position.BOTTOM_LEFT,
+        });
+
+        locationControl.setMap(map);
+
+        naver.maps.Event.addDOMListener(
+          locationControl.getElement(),
+          "click",
+          function () {
+            sendMessageToApp(MySendCommands.requestCurrentPosition, {});
+          }
+        );
+
+        var refreshBtnHtml =
+          '<button id="refreshBtn" class="btn_com" title="새로고침"><i class="fas fa-sync-alt"></i></button>';
+
+        var refreshControl = new naver.maps.CustomControl(refreshBtnHtml, {
+          position: naver.maps.Position.BOTTOM_RIGHT,
+        });
+
+        refreshControl.setMap(map);
+
+        naver.maps.Event.addDOMListener(
+          refreshControl.getElement(),
+          "click",
+          function () {
+            sendMessageToApp(MySendCommands.requestRefreshHome, {});
+          }
+        );
       });
 
       const carIcon = {
@@ -474,9 +506,21 @@
         var longitude = 126.9783882;
 
         for (const [i, vehicle] of vehicles.entries()) {
-          for (const location of vehicle.vehiclelocations) {
+          var locations = vehicle.vehiclelocations.sort((a, b) => {
+            const dateA = new Date(a.recorded_at);
+            const dateB = new Date(b.recorded_at);
+            return dateA - dateB; // 내림차순 정렬
+          });
+
+          for (const location of locations) {
             latitude = location.latitude;
             longitude = location.longitude;
+          }
+
+          if (vehicle.vehicle_id === 1) {
+            console.log(locations);
+            console.log("latitude : " + latitude);
+            console.log("longitude : " + longitude);
           }
 
           var description = `${vehicle.plate_number}(${vehicle.vehicle_type})`;
