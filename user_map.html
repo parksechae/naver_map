@@ -119,7 +119,8 @@
             }
           }
         } else {
-          alert("unknown event : " + event);
+          console.error("unknown event : " + event);
+          // alert("unknown event : " + event);
         }
       });
     </script>
@@ -461,6 +462,7 @@
       // }
 
       function setCarMarkers(vehicles) {
+        // alert("setCarMarkers : " + vehicles.length);
         removeAllObjects();
 
         markers = [];
@@ -468,9 +470,14 @@
         icons = [];
         polylines = [];
 
+        var latitude = 37.5666103;
+        var longitude = 126.9783882;
+
         for (const [i, vehicle] of vehicles.entries()) {
-          latitude = vehicle.current_location_lat;
-          longitude = vehicle.current_location_long;
+          for (const location of vehicle.vehiclelocations) {
+            latitude = location.latitude;
+            longitude = location.longitude;
+          }
 
           var description = `${vehicle.plate_number}(${vehicle.vehicle_type})`;
 
